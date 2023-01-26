@@ -26,7 +26,7 @@ def determine_content(block_img):
 
 def generate_latex_block(block_type, content):
     if block_type == "text":
-        #content = escape_special_chars(content)
+        content = escape_special_chars(content)
         return content
 
     elif block_type == "image":
