@@ -4,9 +4,24 @@ import cv2
 import matplotlib.pyplot as plt
 
 
+def plot_all_boxes(img, boxes):
+    """Plots all rectangles from boxes onto img."""
+    if type(boxes) != list:
+        boxes = [boxes]
+    copy = img.copy()
+    alpha = 0.4
+    for box in boxes:
+       x, y, w, h = box.x, box.y, box.width, box.height
+       rand_color = list(np.random.random(size=3) * 256)
+       cv2.rectangle(copy, (x, y), (x+w, y+h), rand_color, -1)
+    
+    img_new = cv2.addWeighted(copy, alpha, img, 1-alpha, 0)
+    return img_new
+    
 
 class BBox():
     """BBox object representing boundingrectangle. (x coord of top-left, y coord of top-left, wdith, height)"""
+    # TODO: improve names of variables
     def __init__(self, x, y, width, height):
         self.x = x
         self.y = y
