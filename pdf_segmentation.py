@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 
-def plot_all_boxes(img, boxes):
+def plot_all_boxes(img, boxes, figsize=(8,20)):
     """Plots all rectangles from boxes onto img."""
     if type(boxes) != list:
         boxes = [boxes]
@@ -16,8 +16,12 @@ def plot_all_boxes(img, boxes):
        cv2.rectangle(copy, (x, y), (x+w, y+h), rand_color, -1)
     
     img_new = cv2.addWeighted(copy, alpha, img, 1-alpha, 0)
-    return img_new
-    
+    plt.figure(figsize=figsize)
+
+    plt.imshow(img_new)
+    plt.show()
+
+
 
 class BBox():
     """BBox object representing boundingrectangle. (x coord of top-left, y coord of top-left, wdith, height)"""
