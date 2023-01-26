@@ -44,13 +44,8 @@ def segment(img, x=0, y=0):
     HORIZONTAL_POOLING = 25
     img_width = img.shape[1]
     
-    # Convert image to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Apply adaptive thresholding to create a binary image
-    img_bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 5)
-    
     # Apply Gaussian blur to reduce noise
-    blur = cv2.GaussianBlur(img_bw, (7,7), 0) 
+    blur = cv2.GaussianBlur(img, (7,7), 0) 
     
     # Morphological Gradient
     k1 = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
@@ -72,12 +67,24 @@ def segment(img, x=0, y=0):
     for c in contours:
         
         bx,by,bw,bh = cv2.boundingRect(c)
+
+        box = BBox(x, y+by, img_width, bh)
+
+        # Remove completely empty bboxes
+        # For each bbox, check if it's compleatly white
+        # If it is, then remove it
+        percentage_threshold = 0.95 # FIXME: hardcoded
+        
+        img_section = img[box.y:box.y_bottom, box.x:box.x_right]
+        if (img_section == 255).sum() / (img_section.shape[0] * img_section.shape[1]) > percentage_threshold:
+            continue
+
         
         # filter out bounding boxes that are too small
         if bh < MIN_TEXT_SIZE:
             continue
 
-        bboxes.append(BBox(x, y+by, img_width, bh))        
+        bboxes.append(box)        
     
     # sort bounding boxes by their y-coordinate
     return sorted(bboxes, key=lambda x: x.y)
@@ -90,13 +97,13 @@ def segment_page(img):
     # Convert image to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # Apply adaptive thresholding to create a binary image
-    img_bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 5)
+    img = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 5)
 
     column_split_x = img.shape[1]//2 +2 # FIXME: hardcoded
 
     # Compute horizontal histogram
     lookup_distance = 20
-    hist = img_bw[:, column_split_x-lookup_distance:column_split_x+lookup_distance]
+    hist = img[:, column_split_x-lookup_distance:column_split_x+lookup_distance]
     hist = hist.mean(axis=1)
 
     assert len(hist) == img.shape[0]
@@ -224,15 +231,6 @@ def segment_page(img):
     new = []
     [new.append(box) for box in bboxes if not new or not any([box.y > box2.y and box.y_bottom < box2.y_bottom for box2 in new])]
     bboxes = new
-
-    # Remove completely empty bboxes
-    # For each bbox, check if it's compleatly white
-    # If it is, then remove it
-    new = []
-    percentage_threshold = 0.9 # FIXME: hardcoded
-    for box in bboxes:
-        if (img[box.y:box.y_bottom, box.x:box.x_right] == 255).sum() / (box.width * box.height) > percentage_threshold:
-            new.append(box)
 
     return bboxes
 
